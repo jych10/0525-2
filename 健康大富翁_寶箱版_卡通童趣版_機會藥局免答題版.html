@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>健康大富翁｜卡通童趣版 🎲</title>
+    <style>
+        :root {
+            --primary: #ff8a3d;
+            --primary-hover: #f97316;
+            --danger: #ff4d6d;
+            --hospital: #9b5de5;
+            --chance: #00bbf9;
+            --shop: #00c853;
+            --chest: #ffbe0b;
+            --ink: #283044;
+            --cream: #fff8e7;
+            --sky: #bdefff;
+            --bg-gradient: linear-gradient(180deg, #bdefff 0%, #e8f9ff 42%, #fff6d8 100%);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', 'Comic Sans MS', 'Baloo 2', sans-serif;
+            background:
+                radial-gradient(circle at 10% 15%, rgba(255,255,255,0.95) 0 34px, transparent 36px),
+                radial-gradient(circle at 17% 13%, rgba(255,255,255,0.88) 0 24px, transparent 26px),
+                radial-gradient(circle at 83% 18%, rgba(255,255,255,0.9) 0 34px, transparent 36px),
+                radial-gradient(circle at 90% 16%, rgba(255,255,255,0.78) 0 24px, transparent 26px),
+                var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 14px;
+            color: var(--ink);
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "⭐ 🥕 🍎 🧃 ⚽ 💧 🌈";
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: 6px;
+            text-align: center;
+            font-size: 1.6rem;
+            letter-spacing: 18px;
+            opacity: 0.28;
+            pointer-events: none;
+            animation: floatDecor 5s infinite ease-in-out;
+        }
+
+        h1 {
+            font-size: 2.35rem;
+            color: #ff6b35;
+            text-shadow: 0 4px 0 #fff, 0 7px 0 rgba(255, 190, 11, 0.35), 0 10px 18px rgba(0,0,0,0.12);
+            margin: 8px 0 14px;
+            letter-spacing: 1px;
+        }
+
+        /* 遊戲規則與開始畫面 */
+        #welcome-container {
+            background: linear-gradient(180deg, #ffffff 0%, #fff8e7 100%);
+            max-width: 620px;
+            width: 92%;
+            padding: 34px;
+            border-radius: 34px;
+            box-shadow: 0 12px 0 #ffd166, 0 24px 44px rgba(40,48,68,0.22);
+            text-align: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000;
+            border: 5px solid #fff;
+            outline: 4px dashed rgba(255, 138, 61, 0.35);
+        }
+
+        .rule-page { display: none; min-height: 240px; }
+        .rule-page.active { display: block; animation: popIn 0.38s ease; }
+        .rule-icon { font-size: 4.5rem; margin-bottom: 8px; filter: drop-shadow(0 6px 0 rgba(255, 190, 11, 0.35)); }
+        .rule-title { font-size: 1.65rem; color: #ff6b35; margin-bottom: 14px; font-weight: 900; }
+        .rule-content {
+            font-size: 1.02rem;
+            color: #334155;
+            line-height: 1.8;
+            text-align: left;
+            background: #ffffff;
+            padding: 18px;
+            border-radius: 22px;
+            border: 3px solid #ffe08a;
+            box-shadow: inset 0 -5px 0 rgba(255, 209, 102, 0.25);
+        }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 25px; gap: 10px; }
+
+        button {
+            background: linear-gradient(180deg, var(--primary) 0%, #ff6b35 100%);
+            color: white;
+            border: 3px solid #fff;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 900;
+            border-radius: 999px;
+            cursor: pointer;
+            box-shadow: 0 7px 0 #c2410c, 0 12px 18px rgba(0,0,0,0.15);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+        }
+        button:hover { background: linear-gradient(180deg, #ff9f5a 0%, var(--primary-hover) 100%); transform: translateY(-3px) scale(1.02); filter: saturate(1.08); }
+        button:active { transform: translateY(3px); box-shadow: 0 3px 0 #c2410c, 0 8px 12px rgba(0,0,0,0.12); }
+        button:disabled { background: #cbd5e1; box-shadow: 0 5px 0 #94a3b8; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%); box-shadow: 0 7px 0 #475569, 0 12px 18px rgba(0,0,0,0.12); }
+        .btn-secondary:hover { background: linear-gradient(180deg, #aab7c7 0%, #64748b 100%); }
+
+        /* 遊戲主畫面：左側資訊欄 + 右側棋盤 */
+        #game-layout {
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 16px;
+            width: 100%;
+            max-width: 1060px;
+        }
+
+        /* 核心控制面板 */
+        #control-panel {
+            background: linear-gradient(180deg, #ffffff 0%, #fff8e7 100%);
+            padding: 14px;
+            border-radius: 28px;
+            box-shadow: 0 9px 0 #ffd166, 0 18px 30px rgba(40,48,68,0.16);
+            text-align: center;
+            width: 240px;
+            min-width: 240px;
+            position: sticky;
+            top: 12px;
+            border: 4px solid #fff;
+            outline: 3px solid rgba(255, 138, 61, 0.22);
+        }
+        #control-panel h2 { font-size: 1.08rem; margin: 0 0 12px; line-height: 1.35; color: #283044; }
+        #roll-btn { width: 100%; padding: 12px 14px; font-size: 1.08rem; }
+        #dice-result {
+            display: block;
+            margin: 12px 0 0 !important;
+            font-size: 1.08rem !important;
+            color: #0077b6 !important;
+            background: linear-gradient(180deg, #f0fbff 0%, #dff7ff 100%);
+            border: 2px dashed #00bbf9;
+            border-radius: 20px;
+            padding: 10px 8px;
+            min-height: 92px;
+            box-shadow: inset 0 -5px 0 rgba(0,187,249,0.12), 0 6px 0 rgba(0,187,249,0.12);
+            overflow: hidden;
+        }
+        .dice-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .dice-cube {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            background: linear-gradient(145deg, #ffffff 0%, #fff7e6 100%);
+            border: 4px solid #ffffff;
+            box-shadow: 0 7px 0 #ffbe0b, 0 12px 18px rgba(40,48,68,0.18), inset 0 -5px 0 rgba(255,190,11,0.18);
+            display: grid;
+            place-items: center;
+            font-size: 2rem;
+            line-height: 1;
+            filter: drop-shadow(0 3px 0 rgba(255,255,255,0.65));
+        }
+        .dice-cube.rolling {
+            animation: diceRoll 0.42s infinite cubic-bezier(.36,.07,.19,.97);
+        }
+        .dice-label {
+            font-size: 0.9rem;
+            font-weight: 900;
+            color: #0369a1;
+            letter-spacing: 0.5px;
+        }
+        .dice-final {
+            animation: diceFinalPop 0.45s ease both;
+        }
+
+        #players-status { display: flex; flex-direction: column; justify-content: flex-start; gap: 10px; margin-top: 12px; }
+        .status-card {
+            padding: 10px 12px;
+            border-radius: 20px;
+            background: #ffffff;
+            border: 3px solid #e2e8f0;
+            width: 100%;
+            text-align: left;
+            font-size: 0.84rem;
+            line-height: 1.55;
+            box-shadow: 0 5px 0 #e2e8f0;
+        }
+        .status-card.active { transform: rotate(-0.5deg) scale(1.02); box-shadow: 0 7px 0 #ffd166, 0 12px 18px rgba(0,0,0,0.12); }
+
+        /* 7x7 棋盤 (共 24 格) */
+        #board {
+            display: grid;
+            grid-template-columns: repeat(7, 82px);
+            grid-template-rows: repeat(7, 82px);
+            gap: 7px;
+            background: linear-gradient(135deg, #ffe08a 0%, #ffbe0b 100%);
+            padding: 12px;
+            border-radius: 30px;
+            box-shadow: 0 12px 0 #f59e0b, 0 24px 36px rgba(40,48,68,0.2);
+            border: 5px solid #ffffff;
+        }
+
+        .cell {
+            background-color: white;
+            border-radius: 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px;
+            font-size: 0.74rem;
+            font-weight: 900;
+            border: 3px solid #ffffff;
+            position: relative;
+            line-height: 1.22;
+            box-shadow: inset 0 -5px 0 rgba(0,0,0,0.05), 0 4px 0 rgba(40,48,68,0.08);
+            text-align: center;
+        }
+        .cell::after {
+            content: "";
+            position: absolute;
+            top: 6px;
+            left: 8px;
+            width: 18px;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.55);
+            transform: rotate(-20deg);
+        }
+
+        /* 棋盤中間核心圖案美化區 */
+        .center-space {
+            grid-column: 2 / 7;
+            grid-row: 2 / 7;
+            background: radial-gradient(circle at 50% 42%, #ffffff 0 32%, #d9fff2 33% 62%, #bdefff 100%);
+            border: 5px solid #ffffff;
+            outline: 4px dashed rgba(0, 187, 249, 0.38);
+            border-radius: 34px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: inset 0 0 28px rgba(0,187,249,0.16), 0 8px 0 rgba(0,187,249,0.18);
+            overflow: hidden;
+        }
+
+        .center-space::before {
+            content: "🌈";
+            position: absolute;
+            font-size: 12rem;
+            opacity: 0.1;
+            top: 6%;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .center-space::after {
+            content: "🍎  💧  ⚽  🥦";
+            position: absolute;
+            bottom: 26px;
+            font-size: 1.6rem;
+            opacity: 0.58;
+            letter-spacing: 10px;
+        }
+
+        .center-logo-box { z-index: 2; text-align: center; background: rgba(255,255,255,0.72); border-radius: 28px; padding: 20px 26px; border: 3px solid rgba(255,255,255,0.9); }
+        .center-icon { font-size: 4rem; filter: drop-shadow(0 6px 0 rgba(255, 190, 11, 0.35)); margin-bottom: 5px; animation: pulse 2.4s infinite ease-in-out; }
+
+        .cell-start { background: linear-gradient(180deg, #fff176 0%, #ffd166 100%); border-color: #fff7ad; color: #854d0e; }
+        .cell-hospital { background: linear-gradient(180deg, #ead7ff 0%, #cdb4ff 100%); border-color: #f5e8ff; color: #5b21b6; }
+        .cell-chance { background: linear-gradient(180deg, #caf0f8 0%, #90e0ef 100%); border-color: #e0fbff; color: #0369a1; }
+        .cell-shop { background: linear-gradient(180deg, #d9f99d 0%, #86efac 100%); border-color: #f0ffd0; color: #166534; }
+
+        /* 棋子元件 */
+        .tokens-container { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; width: 100%; min-height: 22px; z-index: 2; }
+        .token {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            color: white;
+            font-size: 0.7rem;
+            text-align: center;
+            line-height: 19px;
+            font-weight: 900;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.25), 0 5px 8px rgba(0,0,0,0.16);
+            border: 3px solid white;
+            transition: all 0.2s ease;
+        }
+
+        .cell.walking-target {
+            background: linear-gradient(180deg, #ffcad4 0%, #ff8fab 100%) !important;
+            border-color: #fff !important;
+            animation: wiggle 0.28s infinite ease-in-out;
+        }
+
+        /* 彈窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(40, 48, 68, 0.55);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            padding: 16px;
+        }
+        .modal-content {
+            background: linear-gradient(180deg, #ffffff 0%, #fff8e7 100%);
+            padding: 28px;
+            border-radius: 34px;
+            max-width: 500px;
+            width: min(92vw, 500px);
+            text-align: center;
+            border: 5px solid #ffffff;
+            box-shadow: 0 11px 0 #ffd166, 0 24px 44px rgba(0,0,0,0.22);
+            animation: popIn 0.24s ease;
+        }
+        .options-container { display: flex; flex-direction: column; margin-top: 15px; gap: 10px; }
+        .option-btn {
+            background: #ffffff;
+            color: #334155;
+            text-align: left;
+            padding: 12px 16px;
+            border-radius: 18px;
+            border: 3px solid #dbeafe;
+            font-size: 0.96rem;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #bfdbfe;
+        }
+        .option-btn:hover { background-color: #e0f7ff; transform: translateX(6px) scale(1.01); }
+
+        .analysis-box {
+            background-color: #fff1f2;
+            border: 3px solid #fecdd3;
+            border-radius: 20px;
+            padding: 15px;
+            text-align: left;
+            margin-top: 15px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            box-shadow: inset 0 -5px 0 rgba(254, 205, 211, 0.35);
+        }
+
+        .chest-box {
+            background: linear-gradient(135deg, #fff7ad 0%, #ffd166 55%, #ffbe0b 100%);
+            border: 4px solid #ffffff;
+            border-radius: 26px;
+            padding: 22px;
+            margin-top: 12px;
+            box-shadow: inset 0 -8px 0 rgba(194, 65, 12, 0.12), 0 8px 0 rgba(245, 158, 11, 0.35);
+        }
+        .chest-icon { font-size: 4.8rem; animation: chestBounce 1.1s infinite ease-in-out; filter: drop-shadow(0 7px 0 rgba(194, 65, 12, 0.22)); }
+        .reward-text { font-size: 1.18rem; font-weight: 900; color: #854d0e; line-height: 1.7; margin-top: 10px; }
+
+
+        /* 答對結果與最終排名頁美化 */
+        .success-result-card { position: relative; overflow: hidden; background: linear-gradient(180deg, #ffffff 0%, #ecfff4 48%, #fff8e7 100%); border-radius: 32px; padding: 6px 2px 2px; }
+        .success-result-card::before { content: "🎉 ⭐ 💧 🍎 ⚡ 🎁"; position: absolute; top: 8px; left: 0; right: 0; font-size: 1.45rem; letter-spacing: 10px; opacity: 0.22; animation: floatDecor 4s infinite ease-in-out; pointer-events: none; }
+        .result-hero-icon { font-size: 4.2rem; line-height: 1; margin-top: 4px; filter: drop-shadow(0 7px 0 rgba(255, 209, 102, 0.35)); animation: chestBounce 1.2s infinite ease-in-out; }
+        .result-title { margin: 8px 0 4px; color: #16a34a; font-size: 1.8rem; text-shadow: 0 3px 0 #ffffff, 0 6px 0 rgba(134, 239, 172, 0.36); }
+        .result-subtitle { margin: 0 auto 16px; color: #475569; font-weight: 800; line-height: 1.55; }
+        .result-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0; }
+        .result-stat { background: #ffffff; border-radius: 22px; padding: 12px 8px; border: 3px solid #d9f99d; box-shadow: 0 6px 0 #bbf7d0, 0 10px 16px rgba(22, 163, 74, 0.12); }
+        .result-stat .icon { font-size: 1.75rem; display:block; margin-bottom: 3px; }
+        .result-stat .label { font-size: 0.78rem; color: #64748b; font-weight: 900; }
+        .result-stat .value { font-size: 1.35rem; color: #15803d; font-weight: 1000; margin-top: 2px; }
+        .category-progress-card { margin: 12px 0 0; text-align: left; background: linear-gradient(135deg, #e0f7ff 0%, #ffffff 100%); border: 3px dashed #7dd3fc; border-radius: 24px; padding: 14px 16px; box-shadow: inset 0 -5px 0 rgba(125, 211, 252, 0.22); }
+        .progress-track { height: 14px; border-radius: 999px; background: #e2e8f0; margin-top: 10px; overflow: hidden; border: 2px solid #ffffff; }
+        .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #00bbf9 0%, #00c853 100%); transition: width 0.3s ease; }
+        .ranking-card { position: relative; overflow: hidden; background: linear-gradient(180deg, #fff7ad 0%, #ffffff 45%, #e0f7ff 100%); border-radius: 32px; padding: 2px; }
+        .ranking-card::before { content: "🏆 🎊 🌈 ⭐ 🏆"; position: absolute; left: 0; right: 0; top: 10px; font-size: 1.65rem; letter-spacing: 14px; opacity: 0.22; pointer-events: none; }
+        .ranking-hero { font-size: 4.5rem; margin-top: 8px; filter: drop-shadow(0 8px 0 rgba(245, 158, 11, 0.26)); animation: pulse 1.8s infinite ease-in-out; }
+        .ranking-title { margin: 6px 0 8px; color:#f97316; font-size:1.75rem; text-shadow:0 3px 0 #fff; }
+        .ranking-reason { background:#ffffff; border:3px solid #ffe08a; border-radius:22px; padding:10px 12px; margin: 0 0 14px; color:#475569; font-weight:900; line-height:1.55; box-shadow: 0 5px 0 rgba(255, 190, 11, 0.25); }
+        .ranking-list { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+        .ranking-row { display:grid; grid-template-columns: 54px 1fr auto; align-items:center; gap:10px; background:#ffffff; border:3px solid #e2e8f0; border-radius:22px; padding:10px 12px; box-shadow:0 6px 0 #e2e8f0; text-align:left; }
+        .ranking-row.rank-1 { border-color:#ffd166; box-shadow:0 7px 0 #ffbe0b; transform:scale(1.02); }
+        .ranking-medal { font-size:2rem; text-align:center; }
+        .ranking-name { font-weight:1000; color:#283044; font-size:1.05rem; }
+        .ranking-meta { color:#64748b; font-size:0.82rem; font-weight:800; margin-top:2px; }
+        .ranking-score { font-size:1.25rem; font-weight:1000; color:#16a34a; white-space:nowrap; }
+
+        @media (max-width: 560px) { .result-stats-grid { grid-template-columns: 1fr; } .ranking-row { grid-template-columns: 44px 1fr; } .ranking-score { grid-column: 2; } }
+
+        /* 命運機會與特約藥局停留頁美化 */
+        .special-cell-card { position: relative; overflow: hidden; border-radius: 32px; padding: 6px 2px 2px; }
+        .special-cell-card::before { content: attr(data-decor); position: absolute; top: 8px; left: 0; right: 0; font-size: 1.45rem; letter-spacing: 10px; opacity: 0.22; animation: floatDecor 4s infinite ease-in-out; pointer-events: none; }
+        .special-cell-card.chance-theme { background: linear-gradient(180deg, #ffffff 0%, #e0f7ff 48%, #fff8e7 100%); }
+        .special-cell-card.shop-theme { background: linear-gradient(180deg, #ffffff 0%, #ecfff4 48%, #fff8e7 100%); }
+        .special-hero-icon { font-size: 4.4rem; line-height: 1; margin-top: 4px; filter: drop-shadow(0 7px 0 rgba(255, 209, 102, 0.35)); animation: chestBounce 1.2s infinite ease-in-out; }
+        .special-title { margin: 8px 0 4px; font-size: 1.8rem; text-shadow: 0 3px 0 #ffffff, 0 6px 0 rgba(125, 211, 252, 0.28); }
+        .chance-theme .special-title { color: #0284c7; }
+        .shop-theme .special-title { color: #16a34a; }
+        .special-subtitle { margin: 0 auto 16px; color: #475569; font-weight: 800; line-height: 1.55; }
+        .special-reward-panel { background: #ffffff; border-radius: 24px; padding: 14px 16px; border: 3px solid #bae6fd; box-shadow: 0 6px 0 #e0f2fe, 0 10px 16px rgba(14, 165, 233, 0.12); text-align: left; }
+        .shop-theme .special-reward-panel { border-color: #bbf7d0; box-shadow: 0 6px 0 #dcfce7, 0 10px 16px rgba(22, 163, 74, 0.12); }
+        .special-reward-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+        .special-reward-badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: #e0f7ff; color: #0369a1; font-weight: 1000; }
+        .shop-theme .special-reward-badge { background: #dcfce7; color: #15803d; }
+        .special-score { font-size: 1.9rem; font-weight: 1000; color: #f97316; white-space: nowrap; }
+        .special-tip { margin: 12px 0 0; background: rgba(255,255,255,0.76); border: 3px dashed #ffe08a; border-radius: 20px; padding: 10px 12px; color: #64748b; font-weight: 800; line-height: 1.55; text-align:left; }
+
+        @media (max-width: 980px) {
+            body { padding: 10px; }
+            h1 { font-size: 1.8rem; margin-bottom: 10px; }
+            #game-layout { flex-direction: column; align-items: center; }
+            #control-panel { position: static; width: min(100%, 650px); min-width: 0; }
+            #players-status { flex-direction: row; flex-wrap: wrap; }
+            .status-card { width: calc(50% - 5px); }
+            #board { grid-template-columns: repeat(7, 70px); grid-template-rows: repeat(7, 70px); gap: 5px; }
+            .cell { font-size: 0.67rem; padding: 4px; border-radius: 15px; }
+        }
+
+        @media (max-width: 560px) {
+            #board { grid-template-columns: repeat(7, 12.5vw); grid-template-rows: repeat(7, 12.5vw); padding: 7px; gap: 4px; }
+            .cell { font-size: 0.56rem; }
+            .token { width: 18px; height: 18px; line-height: 15px; font-size: 0.58rem; }
+            .status-card { width: 100%; }
+        }
+
+        @keyframes chestBounce { 0%, 100% { transform: translateY(0) scale(1) rotate(-2deg); } 50% { transform: translateY(-9px) scale(1.08) rotate(2deg); } }
+        @keyframes diceRoll {
+            0% { transform: translateY(0) rotate(0deg) scale(1); }
+            25% { transform: translateY(-10px) rotate(92deg) scale(1.08); }
+            50% { transform: translateY(4px) rotate(185deg) scale(0.96); }
+            75% { transform: translateY(-7px) rotate(275deg) scale(1.05); }
+            100% { transform: translateY(0) rotate(360deg) scale(1); }
+        }
+        @keyframes diceFinalPop {
+            0% { transform: scale(0.7) rotate(-12deg); opacity: 0.35; }
+            65% { transform: scale(1.14) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.92) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes pulse { 0%, 100% { transform: scale(1) rotate(-2deg); } 50% { transform: scale(1.1) rotate(2deg); } }
+        @keyframes wiggle { 0%, 100% { transform: rotate(-1deg) scale(1.02); } 50% { transform: rotate(1deg) scale(1.05); } }
+        @keyframes floatDecor { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+    </style>
+</head>
+<body>
+
+    <h1>🌈 健康大富翁冒險島 🎲</h1>
+
+    <!-- 遊戲規則引導畫面 -->
+    <div id="welcome-container">
+        <div id="page-1" class="rule-page active">
+            <div class="rule-icon">🎲</div>
+            <div class="rule-title">遊戲核心機制</div>
+            <div class="rule-content">
+                歡迎來到健康大富翁！<br>
+                1. 輪到玩家時，按下按鈕擲出 1~6 點骰子。<br>
+                2. 系統會隨機跳出<b>全方位的健康與心理知識問答題</b>。<br>
+                3. <b>答對題目</b>：可前進骰子的<b>全額步數</b>，獲得元氣積分！<br>
+                4. <b>寶箱規則</b>：累積答對 <b>2 題相同類別題型</b>，即可獲得寶箱；打開後會隨機出現「多走幾步」或「增加元氣分數」獎勵；若抽到多走步數，抵達新的問答格後可再答題一次。
+            </div>
+            <div class="nav-buttons">
+                <div></div>
+                <button onclick="changePage(2)">下一頁 ➔</button>
+            </div>
+        </div>
+
+        <div id="page-2" class="rule-page">
+            <div class="rule-icon">⏳</div>
+            <div class="rule-title">懲罰與勝負條件</div>
+            <div class="rule-content">
+                1. <b>答錯無條件捨去</b>：答錯者移動步數折半並直接捨去小數點（例如骰出3步，折半捨去後只走1步）。累計<b>答錯滿 3 次</b>將被強制關進「隔離病房」停賽一輪！<br>
+                2. <b>先滿 250 分即獲勝</b>：率先達到 <b>250 分</b>的玩家將直接奪冠！若有人元氣低於 0 分破產，遊戲也會提前結束結算。
+            </div>
+            <div class="nav-buttons">
+                <button class="btn-secondary" onclick="changePage(1)">⬅ 上一頁</button>
+                <button onclick="changePage(3)">下一頁 ➔</button>
+            </div>
+        </div>
+
+        <div id="page-3" class="rule-page">
+            <div class="rule-icon">👥</div>
+            <div class="rule-title">選擇玩家人數</div>
+            <div class="rule-content" style="text-align: center;">
+                支援 2 ~ 4 人同螢幕競賽。<br>請選擇遊玩人數以初始化健康大富翁地圖：
+            </div>
+            <div style="margin-top: 25px; display: flex; justify-content: center; gap: 10px;">
+                <button style="background:var(--chance);" onclick="startGame(2)">2 人遊玩</button>
+                <button style="background:var(--shop);" onclick="startGame(3)">3 人遊玩</button>
+                <button style="background:var(--hospital);" onclick="startGame(4)">4 人遊玩</button>
+            </div>
+            <div class="nav-buttons" style="margin-top: 15px;">
+                <button class="btn-secondary" onclick="changePage(2)">⬅ 上一頁</button>
+                <div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 遊戲主畫面 -->
+    <div id="game-layout">
+    <!-- 核心面板 -->
+    <div id="control-panel" style="display: none;">
+        <h2 id="current-turn-display">輪到 玩家 1</h2>
+        <button id="roll-btn" onclick="takeTurn()">🎲 擲骰子</button>
+        <span id="dice-result" style="font-size: 20px; margin-left: 15px; font-weight: bold; color: var(--chance);"></span>
+        <div id="players-status"></div>
+    </div>
+
+    <!-- 24格棋盤 -->
+    <div id="board" style="display: none;"></div>
+    </div>
+
+    <!-- 彈窗 -->
+    <div id="game-modal" class="modal">
+        <div class="modal-content" id="modal-content-area"></div>
+    </div>
+
+<script>
+    // 包含健康問答、心理知識、衛生知識、生活習慣、壓力管理之全類型健康題庫（擴充版）
+    const masterQuizBank = [
+        { q: "關於心理健康，當感到壓力過大或情緒低落時，下列哪一種做法最符合「正向心理學」的調適建議？", a: ["壓抑情緒，假裝什麼都沒發生", "連續熬夜追劇來轉移注意力", "找信任的朋友傾訴或練習感恩記錄", "暴飲暴食吃高糖食物宣洩"], correct: 2, analysis: "【錯題檢討】正確答案是<b>找信任的朋友傾訴或練習感恩記錄</b>。正向心理學提倡透過人際連結、感恩練習或正念冥想來提升心理韌性，壓抑或用不健康的方式宣洩只會加重身心負擔。" },
+        { q: "為了維持良好的心血管與大腦健康，醫學一般建議成人每天應保持多少時間的優質睡眠？", a: ["7 - 8 小時", "3 - 4 小時", "11 - 12 小時", "時間不重要，有睡就好"], correct: 0, analysis: "【錯題檢討】正確答案是<b>7 - 8 小時</b>。長期的睡眠不足與高血壓、免疫力下降、記憶力衰退及憂鬱症有高度相關，每天 7~8 小時是成年人最佳的生理修復時間。" },
+        { q: "健康促進常提到「規律運動」，世界衛生組織（WHO）建議成年人每週應至少進行多少分鐘的中強度有氧運動？", a: ["30 分鐘", "60 分鐘", "500 分鐘", "150 分鐘"], correct: 3, analysis: "【錯題檢討】正確答案是<b>150 分鐘</b>。每週 150 分鐘（例如每週 5 天、每次 30 分鐘的快走或騎單車）能顯著降低心血管疾病與糖尿病的風險，並有助於分泌多巴胺，改善心情。" },
+        { q: "日常生活中預防二手菸及電子菸害，下列關於電子菸的敘述何者正確？", a: ["電子菸只有水蒸氣，完全無害", "電子菸不會讓人上癮", "電子菸同樣含有尼古丁與有害化學物", "在室內抽電子菸不會影響他人"], correct: 2, analysis: "【錯題檢討】正確答案是<b>電子菸同樣含有尼古丁與有害化學物</b>。許多電子菸內含高濃度的尼古丁以及甲醛等致癌物，同樣具高成癮性且會對青少年的大腦發育、呼吸道造成嚴重傷害。" },
+        { q: "研究指出，高齡者多參與「幸福感活動」（如手工藝、社區互動、學習新事物），主要能帶來什麼好處？", a: ["活化大腦神經、預防失智與減緩 mild 憂鬱", "單純消磨時間", "增加視力", "直接治癒慢性骨折"], correct: 0, analysis: "【錯題檢討】正確答案是<b>活化大腦神經、預防失智與減緩 mild 憂鬱</b>。高齡者的社會參與及認知活動能刺激大腦可塑性，顯著降低長者的孤獨感與 mild 憂鬱傾向，是維持心理健康的重要基石。" },
+        { q: "日常飲食中，攝取過多的「精緻糖」（如含糖飲料、甜點）除了造成肥胖，還會直接增加罹患什麼慢性病的風險？", a: ["骨質疏鬆症", "一氧化碳中毒", "夜盲症", "第二型糖尿病"], correct: 3, analysis: "【錯題檢討】正確答案是<b>第二型糖尿病</b>。攝取過多精緻糖會導致血糖頻繁劇烈波動，長期下來會引發胰島素阻抗，進而演變成第二型糖尿病。" },
+        { q: "為了預防傳染病，世界衛生組織推廣「正確洗手」的七字訣順序是什麼？", a: ["沖、脫、泡、蓋、送", "吃、飽、睡、足、精神好", "內、外、夾、弓、大、立、腕", "擦、抹、搓、揉、乾"], correct: 2, analysis: "【錯題檢討】正確答案是<b>內、外、夾、弓、大、立、腕</b>。這七字訣涵蓋了手心、手背、指縫、指背、大拇指、指尖及手腕，能確保手部各個死角都被徹底清潔，是成本最低的健康防護。" },
+        { q: "在人際關係與情緒管理中，當同儕或家人意見不合引發憤怒時，最科學的「情緒急救」第一步是？", a: ["深呼吸並刻意抽離現場「暫停 10 秒」", "立刻大聲反駁爭對錯", "買東西暴買宣洩", "悶在心裡一整個月"], correct: 0, analysis: "【錯題檢討】正確答案是<b>深呼吸並刻意抽離現場「暫停 10 秒」</b>。憤怒情緒通常由大腦杏仁核快速驅動，刻意暫停可以讓理性負責的前額葉皮質重新掌管思考，避免衝動做出後悔的決策。" },
+        { q: "關於防曬與皮膚健康，陽光中的紫外線（UV）長期過度曝曬，主要會造成什麼健康危害？", a: ["導致視網膜剝離", "引起嚴重的腸胃發炎", "造成反式脂肪堆積", "加速皮膚老化並增加皮膚癌風險"], correct: 3, analysis: "【錯題檢討】正確答案是<b>加速皮膚老化並增加皮膚癌風險</b>。紫外線會破壞皮膚基底的膠原蛋白、導致黑色素沉澱，嚴重時會引起 DNA 突變，大幅提高皮膚癌的發生率。" },
+        { q: "缺乏哪一種維生素會導致眼睛在暗處看不清，進而引發「夜盲症」？", a: ["維生素 B12", "維生素 A", "維生素 C", "維生素 D"], correct: 1, analysis: "【錯題檢討】正確答案是<b>維生素 A</b>。維生素 A 是構成視網膜視紫質的重要原料，對維持暗處視覺與黏膜健康至關重要。" },
+        { q: "長期缺乏維生素 C 容易引發牙齦出血、皮下青紫、傷口難以癒合的什麼疾病？", a: ["骨質疏鬆", "腳氣病", "糖尿病", "壞血病"], correct: 3, analysis: "【錯題檢討】正確答案是<b>壞血病</b>。維生素 C 是合成膠原蛋白的必需成分，缺乏它會導致全身微血管脆弱，產生出血與無法癒合的病症。" },
+        { q: "為了預防中老年人常見的「骨質疏鬆症」，除了飲食補充鈣質外，還必須搭配哪種維生素與曬太陽？", a: ["維生素 D", "維生素 B6", "維生素 C", "維生素 K"], correct: 0, analysis: "【錯題檢討】正確答案是<b>維生素 D</b>。維生素 D 在腸道中扮演搬運工的角色，能幫助鈣質有效被吸收並沉澱至骨骼中。" },
+        { q: "天天看手機或電腦螢幕，為了保護視力，醫學界建議每用眼多久就必須休息 10 分鐘？", a: ["2 小時", "5 小時", "30 分鐘", "眼睛覺得痛再休息"], correct: 2, analysis: "【錯題檢討】正確答案是<b>30 分鐘</b>。長時間近距離用眼會使睫狀肌過度緊繃，每 30 分鐘看遠方 10 分鐘是放鬆眼睛、預防近視加深的最佳習慣。" },
+        { q: "測量血壓時的「收縮壓」與「舒張壓」，在臨床醫學上，健康的成人理想血壓值應低於多少？", a: ["150 / 100 mmHg", "120 / 80 mmHg", "90 / 60 mmHg", "200 / 120 mmHg"], correct: 1, analysis: "【錯題檢討】正確答案是<b>120 / 80 mmHg</b>。當血壓長期超過 130/80 mmHg 即屬於高血壓前期或高血壓，會大幅提高腦中風與心肌梗塞的機率。" },
+        { q: "當親友出現長期失眠、對所有愛好失去興趣、情緒持續低落超過兩週時，這可能是什麼心理健康的警訊？", a: ["憂鬱症倾向，應尋求專業心理諮商或精神科協助", "只是單純太累了", "代表他長大了", "缺乏運動而已"], correct: 0, analysis: "【錯題檢討】正確答案是<b>憂鬱症倾向，應尋求專業心理諮商或精神科協助</b>。憂鬱症不時候只是「心情不好」，而是一種大腦神經傳導物質失衡的生理現象，持續兩週以上的核心症狀需要尋求醫療專業支持。" },
+        {"category": "健康問答", "q": "成人若想維持骨骼健康，下列哪一組生活方式最合適？", "a": ["只補充含糖飲料，避免曬太陽", "均衡攝取鈣質、維生素 D，並搭配負重運動", "每天久坐休息，減少任何活動", "只吃單一保健食品即可"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>均衡攝取鈣質、維生素 D，並搭配負重運動</b>。骨骼健康需要營養、日照與適度負重刺激共同維持，只靠單一補充品並不完整。"},
+        {"category": "健康問答", "q": "下列哪一項比較符合預防高血壓的日常飲食原則？", "a": ["增加高鹽加工食品攝取", "每天以含糖飲料取代白開水", "多選擇原型食物並減少鈉攝取", "完全不吃蔬菜水果"], "correct": 2, "analysis": "【錯題檢討】正確答案是<b>多選擇原型食物並減少鈉攝取</b>。過多鈉攝取會增加血壓負擔，原型食物通常比加工食品更能幫助控制鹽分與油脂。"},
+        {"category": "健康問答", "q": "關於體重控制，下列哪一種觀念較正確？", "a": ["只要完全不吃晚餐就一定健康", "短期極端節食比長期生活調整更安全", "體重管理應結合飲食、活動量與睡眠習慣", "只要運動就可以無限制吃高糖食物"], "correct": 2, "analysis": "【錯題檢討】正確答案是<b>體重管理應結合飲食、活動量與睡眠習慣</b>。健康體重管理不是短期挨餓，而是建立可持續的飲食、運動與作息模式。"},
+        {"category": "健康問答", "q": "下列哪一種情況較需要盡快尋求醫療協助？", "a": ["胸口劇烈疼痛且冒冷汗", "偶爾打哈欠", "短暫覺得口渴", "走路後小腿微酸"], "correct": 0, "analysis": "【錯題檢討】正確答案是<b>胸口劇烈疼痛且冒冷汗</b>。胸痛合併冒冷汗可能與心血管急症有關，應及早就醫或求助緊急醫療。"},
+        {"category": "健康問答", "q": "關於疫苗接種，下列哪一項觀念較正確？", "a": ["疫苗主要是幫助身體建立免疫記憶", "接種疫苗後一定完全不會生病", "所有人都不需要依年齡補打疫苗", "疫苗只對小孩有意義"], "correct": 0, "analysis": "【錯題檢討】正確答案是<b>疫苗主要是幫助身體建立免疫記憶</b>。疫苗可降低感染、重症或併發症風險，但不同疫苗與族群仍需依專業建議安排。"},
+        {"category": "健康問答", "q": "缺鐵性貧血常見的可能表現是什麼？", "a": ["皮膚變藍且長高變快", "容易疲倦、頭暈或臉色蒼白", "完全不會影響精神狀態", "只會造成牙齒變白"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>容易疲倦、頭暈或臉色蒼白</b>。鐵質不足會影響血紅素生成，可能使氧氣運送能力下降，進而出現疲倦或頭暈。"},
+        {"category": "健康問答", "q": "下列哪一種做法有助於降低第二型糖尿病風險？", "a": ["長期大量喝含糖飲料", "維持規律活動並減少精緻糖攝取", "每天只吃甜點不吃正餐", "完全不睡覺提高代謝"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>維持規律活動並減少精緻糖攝取</b>。規律活動有助於血糖利用，減少精緻糖則能降低血糖劇烈波動與胰島素負擔。"},
+        {"category": "心理知識", "q": "下列哪一項最符合心理健康中的「自我覺察」？", "a": ["完全忽略自己的情緒", "能辨識自己的情緒、想法與身體反應", "把所有問題都怪罪別人", "永遠不需要反省"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>能辨識自己的情緒、想法與身體反應</b>。自我覺察能幫助我們更早發現壓力訊號，並選擇合適的調適方式。"},
+        {"category": "心理知識", "q": "如果朋友主動向你透露最近很低落，下列哪一種回應最具支持性？", "a": ["你不要想太多啦，這沒什麼", "先聆聽並表達願意陪伴，再鼓勵尋求協助", "立刻把他的事情告訴所有同學", "嘲笑他太脆弱"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>先聆聽並表達願意陪伴，再鼓勵尋求協助</b>。支持他人時，理解與陪伴比急著評價更重要，必要時也應鼓勵尋求專業資源。"},
+        {"category": "心理知識", "q": "長期壓抑情緒、從不表達感受，可能會造成什麼影響？", "a": ["一定讓人永遠快樂", "可能增加身心壓力與人際誤解", "會讓記憶力立刻變好", "完全沒有任何影響"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>可能增加身心壓力與人際誤解</b>。情緒需要被理解與調節，長期壓抑可能使壓力累積，也讓他人難以知道真正需求。"},
+        {"category": "心理知識", "q": "心理健康中的「復原力」主要是指什麼？", "a": ["遇到困難後調整並重新站起來的能力", "永遠不會遇到挫折", "完全不需要朋友幫忙", "只要考試高分就代表復原力高"], "correct": 0, "analysis": "【錯題檢討】正確答案是<b>遇到困難後調整並重新站起來的能力</b>。復原力不是沒有壓力，而是在壓力後能運用資源、修正策略並逐步恢復。"},
+        {"category": "心理知識", "q": "下列哪一種行為比較能幫助建立良好人際關係？", "a": ["只顧自己說話，不聽別人回應", "尊重差異並練習同理對方感受", "故意散播他人隱私", "遇到不同意見就立刻攻擊"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>尊重差異並練習同理對方感受</b>。良好關係需要互相尊重、傾聽與清楚表達，而不是只追求自己一定要贏。"},
+        {"category": "心理知識", "q": "當一個人長期失去興趣、食慾或睡眠明顯改變，且影響生活時，較合適的做法是？", "a": ["嘲笑自己不夠努力", "尋求可信任的人與專業協助", "完全與外界斷聯", "靠熬夜讓自己忘記問題"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>尋求可信任的人與專業協助</b>。心理困擾若已持續並影響生活功能，及早求助可以獲得評估與支持。"},
+        {"category": "心理知識", "q": "下列哪一項屬於比較健康的自我對話？", "a": ["我一次失敗就代表我永遠不行", "我可以檢討原因，下一次調整做法", "我不能犯任何錯", "所有人都一定討厭我"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>我可以檢討原因，下一次調整做法</b>。健康的自我對話能保留改善空間，而不是用絕對化語句否定自己。"},
+        {"category": "衛生知識", "q": "咳嗽或打噴嚏時，下列哪一種做法較符合呼吸道衛生？", "a": ["直接對著別人咳嗽", "用手肘內側或衛生紙遮住口鼻", "故意靠近人群", "用同一張衛生紙反覆擦桌子"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>用手肘內側或衛生紙遮住口鼻</b>。呼吸道衛生能減少飛沫散播，使用後的衛生紙也應立即丟棄並洗手。"},
+        {"category": "衛生知識", "q": "處理生食與熟食時，為什麼砧板與刀具最好分開？", "a": ["只是為了看起來漂亮", "可降低交叉污染與食物中毒風險", "能讓食物變得更甜", "可以完全取代洗手"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>可降低交叉污染與食物中毒風險</b>。生食可能帶有微生物，若接觸熟食器具，容易造成交叉污染。"},
+        {"category": "衛生知識", "q": "如廁後、吃飯前洗手，主要是為了什麼？", "a": ["降低病菌入口與傳播機會", "讓手變得更香但不影響健康", "增加手機使用時間", "取代所有防疫措施"], "correct": 0, "analysis": "【錯題檢討】正確答案是<b>降低病菌入口與傳播機會</b>。手部常接觸環境表面，正確洗手是預防腸胃道與呼吸道感染的重要方式。"},
+        {"category": "衛生知識", "q": "下列哪一項是比較正確的食品保存觀念？", "a": ["熟食放室溫一整天也沒關係", "冷藏可以延緩多數細菌生長，但仍要注意期限", "只要聞起來沒味道就一定安全", "冷凍後食物永遠不會變質"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>冷藏可以延緩多數細菌生長，但仍要注意期限</b>。低溫能降低微生物生長速度，但不是永久保存，仍需注意保存時間與加熱。"},
+        {"category": "衛生知識", "q": "關於共用個人物品，下列哪一項較安全？", "a": ["共用牙刷比較環保", "避免共用牙刷、刮鬍刀等可能接觸血液或體液的用品", "大家共用毛巾一定不會有問題", "用水沖一下就可以共用所有用品"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>避免共用牙刷、刮鬍刀等可能接觸血液或體液的用品</b>。個人物品可能造成病原傳播，尤其是會接觸黏膜、血液或體液的物品。"},
+        {"category": "衛生知識", "q": "下列哪一種做法有助於維持室內空氣品質？", "a": ["長時間密閉且多人聚集", "適度通風並避免室內吸菸或使用電子菸", "把垃圾堆在角落不處理", "完全不清潔空調濾網"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>適度通風並避免室內吸菸或使用電子菸</b>。通風可降低污染物與病原累積，菸品與電子菸也會影響室內空氣品質。"},
+        {"category": "衛生知識", "q": "清潔傷口時，下列哪一種觀念較正確？", "a": ["先以乾淨清水沖洗髒污，必要時再消毒包紮", "把泥沙留在傷口裡比較快好", "用髒手直接按壓傷口", "不管多深都完全不用處理"], "correct": 0, "analysis": "【錯題檢討】正確答案是<b>先以乾淨清水沖洗髒污，必要時再消毒包紮</b>。傷口清潔可降低感染風險，若傷口深、出血不止或有異物殘留，應就醫處理。"},
+        {"category": "生活習慣", "q": "下列哪一項比較能幫助建立規律睡眠？", "a": ["每天睡前滑手機到很晚", "固定起床時間並減少睡前強光刺激", "週末完全日夜顛倒", "睡前大量喝咖啡"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>固定起床時間並減少睡前強光刺激</b>。規律作息能幫助生理時鐘穩定，睡前強光與咖啡因則可能干擾入睡。"},
+        {"category": "生活習慣", "q": "長時間久坐時，較建議的做法是什麼？", "a": ["一坐就是三小時完全不動", "每隔一段時間起身伸展或走動", "只要坐姿歪斜就比較放鬆", "用含糖飲料補充精神就好"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>每隔一段時間起身伸展或走動</b>。久坐會增加肌肉僵硬與代謝負擔，規律中斷久坐有助於促進循環。"},
+        {"category": "生活習慣", "q": "想增加日常活動量，下列哪一種方式最容易執行且可持續？", "a": ["完全不走路，只搭電梯", "把短距離步行、爬樓梯融入生活", "只在第一天運動三小時後放棄", "運動前故意不喝水"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>把短距離步行、爬樓梯融入生活</b>。健康行為越容易融入日常，越有機會長期維持。"},
+        {"category": "生活習慣", "q": "關於喝水習慣，下列哪一項較健康？", "a": ["長時間完全不喝水，渴到不行再喝", "以白開水為主要水分來源，依活動量適度補充", "每天只喝含糖飲料", "用咖啡完全取代所有水分"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>以白開水為主要水分來源，依活動量適度補充</b>。水分對體溫調節、代謝與專注力都有幫助，含糖飲料不宜作為主要水分來源。"},
+        {"category": "生活習慣", "q": "使用 3C 產品時，下列哪一項較能保護眼睛？", "a": ["螢幕亮度調到最刺眼", "保持適當距離並定時看遠休息", "關燈躺著滑手機", "眼睛酸痛仍持續近距離用眼"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>保持適當距離並定時看遠休息</b>。近距離用眼過久會增加眼睛疲勞，適度休息與良好光線能降低負擔。"},
+        {"category": "生活習慣", "q": "下列哪一項比較符合健康早餐的概念？", "a": ["只喝高糖飲料不吃其他食物", "包含全穀雜糧、蛋白質與蔬果的搭配", "每天只吃糖果", "完全不吃早餐一定比較有精神"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>包含全穀雜糧、蛋白質與蔬果的搭配</b>。均衡早餐能提供較穩定的能量，也有助於上午專注。"},
+        {"category": "生活習慣", "q": "下列哪一種習慣比較有助於維持運動安全？", "a": ["運動前完全不暖身", "依能力循序漸進並注意補水與暖身", "一開始就挑戰超過能力的強度", "受傷後繼續硬撐"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>依能力循序漸進並注意補水與暖身</b>。運動安全重點是逐步增加負荷，避免突然過量造成傷害。"},
+        {"category": "壓力管理", "q": "當你覺得待辦事項太多而焦慮時，下列哪一種方式較能降低壓力？", "a": ["把所有事情都拖到最後一刻", "把任務拆小並排出優先順序", "完全不看任何訊息", "用責罵自己增加動力"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>把任務拆小並排出優先順序</b>。壓力常來自模糊與失控感，拆解任務能讓行動更明確。"},
+        {"category": "壓力管理", "q": "下列哪一種是較健康的壓力紓解方式？", "a": ["深呼吸、散步或找人談談", "暴飲暴食到不舒服", "熬夜滑手機到天亮", "把怒氣全部發洩在別人身上"], "correct": 0, "analysis": "【錯題檢討】正確答案是<b>深呼吸、散步或找人談談</b>。健康的紓壓方式能降低身心負擔，而不是製造新的健康或人際問題。"},
+        {"category": "壓力管理", "q": "遇到考試或報告前緊張時，下列哪一種想法比較有幫助？", "a": ["我一定會完蛋，所以不用準備", "我可以先完成最重要的一步，再逐步修正", "只要緊張就是失敗", "把所有壓力都藏起來"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>我可以先完成最重要的一步，再逐步修正</b>。把焦點放在可控制的下一步，比災難化想像更能恢復行動感。"},
+        {"category": "壓力管理", "q": "下列哪一項較符合正念練習的精神？", "a": ["專注觀察當下呼吸與感受，不急著批判自己", "逼自己完全沒有任何想法", "用正念取代所有醫療協助", "只要做一次就永遠不會有壓力"], "correct": 0, "analysis": "【錯題檢討】正確答案是<b>專注觀察當下呼吸與感受，不急著批判自己</b>。正念不是清空大腦，而是練習覺察當下並減少自我批判。"},
+        {"category": "壓力管理", "q": "當衝突發生、情緒升高時，先暫停對話的主要目的通常是什麼？", "a": ["讓自己有時間冷靜，避免衝動傷人", "表示自己一定是對的", "讓對方更生氣", "永遠不再溝通"], "correct": 0, "analysis": "【錯題檢討】正確答案是<b>讓自己有時間冷靜，避免衝動傷人</b>。短暫暫停能降低衝動反應，之後再回到問題本身比較容易有效溝通。"},
+        {"category": "壓力管理", "q": "若長期壓力已經影響睡眠、食慾或日常功能，較合適的做法是？", "a": ["繼續硬撐，完全不求助", "尋求師長、家人、諮商或醫療等資源", "只靠罵自己撐過去", "把壓力轉嫁給別人"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>尋求師長、家人、諮商或醫療等資源</b>。壓力若已明顯影響生活功能，求助不是軟弱，而是有效照顧自己的方法。"},
+        {"category": "壓力管理", "q": "下列哪一種時間管理方式最能減少拖延造成的壓力？", "a": ["所有任務都等到截止前一晚", "設定小目標、短時間專注並安排休息", "完全不訂任何計畫", "只做最簡單的事，重要任務永遠不碰"], "correct": 1, "analysis": "【錯題檢討】正確答案是<b>設定小目標、短時間專注並安排休息</b>。清楚的小目標能降低啟動困難，適度休息也能維持專注力。"}
+    ];
+
+    let dynamicQuizPools = {};
+
+    const gridMapping = [
+        {id: 0, name: "🚩 健康起點", type: "start", r: 1, c: 1},
+        {id: 1, name: "❓ 健康問答", type: "quiz", r: 1, c: 2},
+        {id: 2, name: "❓ 心理知識", type: "quiz", r: 1, c: 3},
+        {id: 3, name: "❓ 衛生知識", type: "quiz", r: 1, c: 4},
+        {id: 4, name: "❓ 生活習慣", type: "quiz", r: 1, c: 5},
+        {id: 5, name: "❓ 壓力管理", type: "quiz", r: 1, c: 6},
+        {id: 6, name: "🏥 隔離病房", type: "hospital", r: 1, c: 7},
+        {id: 7, name: "❓ 心理知識", type: "quiz", r: 2, c: 7},
+        {id: 8, name: "❓ 健康問答", type: "quiz", r: 3, c: 7},
+        {id: 9, name: "❓ 衛生知識", type: "quiz", r: 4, c: 7},
+        {id: 10, name: "❓ 生活習慣", type: "quiz", r: 5, c: 7},
+        {id: 11, name: "❓ 心理知識", type: "quiz", r: 6, c: 7},
+        {id: 12, name: "🎲 命運機會", type: "chance", r: 7, c: 7},
+        {id: 13, name: "❓ 健康問答", type: "quiz", r: 7, c: 6},
+        {id: 14, name: "❓ 壓力管理", type: "quiz", r: 7, c: 5},
+        {id: 15, name: "❓ 衛生知識", type: "quiz", r: 7, c: 4},
+        {id: 16, name: "❓ 生活習慣", type: "quiz", r: 7, c: 3},
+        {id: 17, name: "❓ 心理知識", type: "quiz", r: 7, c: 2},
+        {id: 18, name: "💊 特約藥局", type: "shop", r: 7, c: 1},
+        {id: 19, name: "❓ 健康問答", type: "quiz", r: 6, c: 1},
+        {id: 20, name: "❓ 壓力管理", type: "quiz", r: 5, c: 1},
+        {id: 21, name: "❓ 衛生知識", type: "quiz", r: 4, c: 1},
+        {id: 22, name: "❓ 生活習慣", type: "quiz", r: 3, c: 1},
+        {id: 23, name: "❓ 心理知識", type: "quiz", r: 2, c: 1}
+    ];
+
+    let players = [];
+    let currentPlayerIndex = 0;
+    let isMovingAnimation = false;
+    const playerColors = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b"];
+
+    function changePage(pageNum) {
+        document.querySelectorAll('.rule-page').forEach(page => page.classList.remove('active'));
+        document.getElementById(`page-${pageNum}`).classList.add('active');
+    }
+
+    function getQuizCategory(quiz) {
+        if (quiz.category) return quiz.category;
+        const text = quiz.q + quiz.analysis;
+        if (text.includes("壓力") || text.includes("情緒急救") || text.includes("憤怒") || text.includes("正向心理學") || text.includes("感恩")) return "壓力管理";
+        if (text.includes("心理") || text.includes("憂鬱") || text.includes("幸福感") || text.includes("孤獨感")) return "心理知識";
+        if (text.includes("洗手") || text.includes("傳染") || text.includes("電子菸") || text.includes("二手菸") || text.includes("衛生")) return "衛生知識";
+        if (text.includes("睡眠") || text.includes("運動") || text.includes("手機") || text.includes("電腦") || text.includes("用眼")) return "生活習慣";
+        if (text.includes("血壓") || text.includes("糖尿病") || text.includes("維生素") || text.includes("骨質") || text.includes("皮膚") || text.includes("防曬")) return "健康問答";
+        return "健康問答";
+    }
+
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function resetQuizPools() {
+        dynamicQuizPools = {};
+    }
+
+    function getCellQuizCategory(cell) {
+        if (cell && cell.type === "quiz") {
+            return cell.name.replace("❓", "").trim();
+        }
+        return "健康問答";
+    }
+
+    function getQuizQuestionByCategory(category) {
+        if (!dynamicQuizPools[category] || dynamicQuizPools[category].length === 0) {
+            const categoryQuestions = masterQuizBank.filter(q => getQuizCategory(q) === category);
+            const sourceQuestions = categoryQuestions.length > 0 ? categoryQuestions : masterQuizBank;
+            dynamicQuizPools[category] = shuffleArray([...sourceQuestions]);
+        }
+        return dynamicQuizPools[category].pop();
+    }
+
+    function initBoardUI() {
+        const board = document.getElementById("board");
+        board.innerHTML = ""; 
+
+        gridMapping.forEach(cell => {
+            const cellDiv = document.createElement("div");
+            cellDiv.className = `cell cell-${cell.type}`;
+            cellDiv.style.gridRow = cell.r;
+            cellDiv.style.gridColumn = cell.c;
+            cellDiv.id = `cell-${cell.id}`;
+            cellDiv.innerHTML = `<div style="text-align:center;">${cell.name}</div><div class="tokens-container" id="tokens-${cell.id}"></div>`;
+            board.appendChild(cellDiv);
+        });
+
+        const centerDiv = document.createElement("div");
+        centerDiv.className = "center-space";
+        centerDiv.innerHTML = `
+            <div class="center-logo-box">
+                <div class="center-icon">🛡️❤️</div>
+                <strong style='font-size:1.6rem; color:#15803d; letter-spacing:1px;'>HEALTH<br>MONOPOLY</strong><br>
+                <span style='font-size:12px;color:#64748b;font-weight:bold;display:block;margin-top:5px;'>先滿 250 分者獲勝 🎉</span>
+            </div>
+        `;
+        board.appendChild(centerDiv);
+    }
+
+    function startGame(playerCount) {
+        document.getElementById("welcome-container").style.display = "none";
+        document.getElementById("game-layout").style.display = "flex";
+        document.getElementById("control-panel").style.display = "block";
+        document.getElementById("board").style.display = "grid";
+
+        resetQuizPools();
+        initBoardUI();
+
+        players = [];
+        for (let i = 0; i < playerCount; i++) {
+            players.push({
+                id: i + 1,
+                name: `玩家 ${i + 1}`,
+                color: playerColors[i],
+                position: 0,
+                wrongCount: 0,
+                inHospital: false,
+                score: 100,
+                correctCategoryCounts: {},
+                chestCount: 0 
+            });
+        }
+        currentPlayerIndex = 0;
+        updateUI();
+    }
+
+    function updateUI() {
+        for (let i = 0; i < 24; i++) {
+            document.getElementById(`tokens-${i}`).innerHTML = "";
+        }
+        players.forEach(p => {
+            const token = document.createElement("div");
+            token.className = "token";
+            token.style.backgroundColor = p.color;
+            token.innerText = `P${p.id}`;
+            document.getElementById(`tokens-${p.position}`).appendChild(token);
+        });
+
+        const statusContainer = document.getElementById("players-status");
+        statusContainer.innerHTML = "";
+        players.forEach((p, idx) => {
+            const card = document.createElement("div");
+            card.className = `status-card ${idx === currentPlayerIndex ? 'active' : ''}`;
+            if (idx === currentPlayerIndex) {
+                card.style.border = `2px solid ${p.color}`;
+                card.style.background = `${p.color}10`;
+            } else {
+                card.style.borderLeft = `4px solid ${p.color}`;
+            }
+            card.innerHTML = `
+                <strong style="color:${p.color}; font-size:0.95rem;">${p.name}</strong><br>
+                元氣分數: <b style="font-size:1.05rem;">${p.score}</b> / 250<br>
+                答錯次數: <span style="color:var(--danger); font-weight:bold;">${p.wrongCount}/3</span><br>
+                寶箱: <span style="color:var(--chest); font-weight:bold;">${p.chestCount}</span> 個<br>
+                狀態: ${p.inHospital ? '<span style="color:var(--hospital)">🏥 隔離中</span>' : '🟢 良好'}
+            `;
+            statusContainer.appendChild(card);
+        });
+
+        document.getElementById("current-turn-display").innerHTML = `輪到 <span style="color:${players[currentPlayerIndex].color}; font-weight:bold;">${players[currentPlayerIndex].name}</span>`;
+        if(!isMovingAnimation) {
+            document.getElementById("roll-btn").disabled = false;
+        }
+    }
+
+    function animateDiceRoll(finalDice) {
+        return new Promise(resolve => {
+            const diceResult = document.getElementById("dice-result");
+            const diceFaces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+            let tick = 0;
+            diceResult.innerHTML = `
+                <div class="dice-stage">
+                    <div class="dice-cube rolling" id="animated-dice">🎲</div>
+                    <div class="dice-label">骰子正在健康冒險島上滾動中...</div>
+                </div>
+            `;
+            const diceEl = document.getElementById("animated-dice");
+            const rollTimer = setInterval(() => {
+                diceEl.textContent = diceFaces[Math.floor(Math.random() * diceFaces.length)];
+                tick++;
+            }, 90);
+
+            setTimeout(() => {
+                clearInterval(rollTimer);
+                diceResult.innerHTML = `
+                    <div class="dice-stage dice-final">
+                        <div class="dice-cube">${diceFaces[finalDice - 1]}</div>
+                        <div class="dice-label">🎉 擲出了 ${finalDice} 點！</div>
+                    </div>
+                `;
+                resolve();
+            }, 950);
+        });
+    }
+
+    async function takeTurn() {
+        if(isMovingAnimation) return;
+        document.getElementById("roll-btn").disabled = true;
+        const player = players[currentPlayerIndex];
+
+        if (player.inHospital) {
+            showHospitalModal(player);
+            return;
+        }
+
+        const dice = Math.floor(Math.random() * 6) + 1;
+        await animateDiceRoll(dice);
+
+        setTimeout(() => {
+            const targetPosition = (player.position + dice) % 24;
+            const targetCell = gridMapping[targetPosition];
+
+            if (targetCell.type === "hospital") {
+                showLandingHospitalModal(player, dice);
+                return;
+            }
+
+            if (targetCell.type === "chance" || targetCell.type === "shop") {
+                proceedGameMovement(dice);
+                return;
+            }
+
+            showQuizModal(player, dice);
+        }, 350);
+    }
+
+    function showHospitalModal(player) {
+        const modal = document.getElementById("game-modal");
+        const content = document.getElementById("modal-content-area");
+        content.innerHTML = `
+            <h2 style="color:var(--hospital); margin-top:0;">🏥 隔離病房療養中</h2>
+            <p style="font-size:1.05rem;"><strong>${player.name}</strong> 防護網崩潰，本回合被迫強制停賽休息一輪。</p>
+            <button style="background:var(--hospital); width:100%; margin-top:15px;" onclick="releaseFromHospital()">出院並交棒下家</button>
+        `;
+        modal.style.display = "flex";
+    }
+
+    function showLandingHospitalModal(player, dice) {
+        const modal = document.getElementById("game-modal");
+        const content = document.getElementById("modal-content-area");
+        content.innerHTML = `
+            <h2 style="color:var(--hospital); margin-top:0;">🏥 抵達隔離病房</h2>
+            <p style="font-size:1.05rem; line-height:1.7;"><strong>${player.name}</strong> 本回合骰出的目標格是【隔離病房】，因此本輪不進行答題，直接前進 <b>${dice}</b> 步後換下一位。</p>
+            <button style="background:var(--hospital); width:100%; margin-top:15px;" onclick="moveToHospitalAndEnd(${dice})">前往隔離病房，換下一位</button>
+        `;
+        modal.style.display = "flex";
+    }
+
+    async function moveToHospitalAndEnd(dice) {
+        document.getElementById("game-modal").style.display = "none";
+        const player = players[currentPlayerIndex];
+        await walkPlayerSteps(player, dice);
+        updateUI();
+        endTurn();
+    }
+
+    function releaseFromHospital() {
+        const player = players[currentPlayerIndex];
+        player.inHospital = false;
+        player.wrongCount = 0; 
+        document.getElementById("game-modal").style.display = "none";
+        endTurn();
+    }
+
+    function showQuizModal(player, dice) {
+        const modal = document.getElementById("game-modal");
+        const content = document.getElementById("modal-content-area");
+        
+        const targetPosition = (player.position + dice) % 24;
+        const targetCell = gridMapping[targetPosition];
+        const quizCategory = getCellQuizCategory(targetCell);
+        const currentQuiz = getQuizQuestionByCategory(quizCategory);
+
+        let optionsHtml = "";
+        currentQuiz.a.forEach((opt, index) => {
+            optionsHtml += `<button class="option-btn" onclick="handleAnswer(${index}, ${currentQuiz.correct}, ${dice}, ${JSON.stringify(currentQuiz.analysis).replace(/"/g, '&quot;')}, '${quizCategory}')"><b>${index + 1}.</b> ${opt}</button>`;
+        });
+
+        content.innerHTML = `
+            <div style="background:${player.color}; color:white; padding:5px 12px; border-radius:30px; display:inline-block; font-size:0.85rem; font-weight:bold; margin-bottom:12px;">
+                ${player.name} 答題中｜目標格：${targetCell.name}｜題型：${quizCategory} (骰子點數：${dice})
+            </div>
+            <h3 style="margin-top:0; color:#0f172a; text-align:left; line-height:1.5; font-size:1.15rem;">${currentQuiz.q}</h3>
+            <div class="options-container">${optionsHtml}</div>
+        `;
+        modal.style.display = "flex";
+    }
+
+    async function walkPlayerSteps(player, totalSteps) {
+        isMovingAnimation = true;
+        document.getElementById("roll-btn").disabled = true;
+
+        for (let i = 0; i < totalSteps; i++) {
+            let nextPos = (player.position + 1) % 24;
+            player.position = nextPos;
+
+            const targetCell = document.getElementById(`cell-${nextPos}`);
+            targetCell.classList.add('walking-target');
+
+            updateUI(); 
+
+            await new Promise(resolve => setTimeout(resolve, 250));
+            targetCell.classList.remove('walking-target');
+        }
+
+        isMovingAnimation = false;
+    }
+
+    function handleAnswer(selectedIndex, correctIndex, dice, analysisText, quizCategory) {
+        const modal = document.getElementById("game-modal");
+        const content = document.getElementById("modal-content-area");
+        const player = players[currentPlayerIndex];
+        
+        let stepsMoved = 0;
+        let scoreChange = 0;
+        let isCorrect = selectedIndex === correctIndex;
+
+        modal.style.display = "none";
+
+        if (isCorrect) {
+            stepsMoved = dice;
+            scoreChange = 25;
+            player.score += scoreChange;
+
+            const earnedChest = recordCorrectCategory(player, quizCategory);
+            updateUI();
+            showCorrectResultModal(player, stepsMoved, scoreChange, quizCategory, earnedChest);
+        } else {
+            stepsMoved = Math.floor(dice / 2);
+            player.wrongCount += 1;
+            scoreChange = -20;
+            player.score += scoreChange;
+
+            content.innerHTML = `
+                <h3 style="color:var(--danger); margin-top:0;">❌ 回答錯誤！</h3>
+                <p style="text-align:left; font-size:1rem; margin-bottom:5px;">
+                    很遺憾，這題你答錯了。步數折半並無條件捨去，只能前進 <b>${stepsMoved}</b> 步（元氣扣除 20 點）。
+                </p>
+                <div class="analysis-box">
+                    ${analysisText}
+                </div>
+                <button style="background:var(--danger); width:100%; margin-top:15px;" onclick="closeAnalysisAndMove(${stepsMoved})">吸收知識，繼續移動</button>
+            `;
+            modal.style.display = "flex";
+        }
+    }
+
+    function showCorrectResultModal(player, stepsMoved, scoreChange, quizCategory, earnedChest) {
+        const modal = document.getElementById("game-modal");
+        const content = document.getElementById("modal-content-area");
+        const categoryCount = player.correctCategoryCounts[quizCategory] || 0;
+        const progressPercent = earnedChest ? 100 : Math.min(100, (categoryCount / 2) * 100);
+        const progressText = earnedChest ? `已集滿 2 題「${quizCategory}」，獲得 1 個寶箱！` : `目前「${quizCategory}」類別答對累積：${categoryCount}/2`;
+        const chestHtml = earnedChest
+            ? `<div class="category-progress-card" style="background:linear-gradient(135deg,#fff7ad 0%,#ffffff 100%); border-color:#ffbe0b;"><b style="color:#b45309;">🎁 寶箱解鎖成功！</b><br><span style="color:#854d0e; font-weight:800;">連續累積健康知識能量，等等就可以開寶箱抽獎勵。</span><div class="progress-track"><div class="progress-fill" style="width:${progressPercent}%; background:linear-gradient(90deg,#ffbe0b 0%,#ff8a3d 100%);"></div></div></div>`
+            : `<div class="category-progress-card"><b style="color:#0369a1;">📚 題型累積進度</b><br><span style="color:#475569; font-weight:800;">${progressText}，再答對 ${2 - categoryCount} 題就能獲得寶箱。</span><div class="progress-track"><div class="progress-fill" style="width:${progressPercent}%;"></div></div></div>`;
+        content.innerHTML = `
+            <div class="success-result-card">
+                <div class="result-hero-icon">✅</div>
+                <h2 class="result-title">答對了！健康能量上升</h2>
+                <p class="result-subtitle"><strong style="color:${player.color};">${player.name}</strong> 成功通過「${quizCategory}」挑戰，準備往前衝！</p>
+                <div class="result-stats-grid">
+                    <div class="result-stat"><span class="icon">👟</span><div class="label">本次前進</div><div class="value">${stepsMoved} 步</div></div>
+                    <div class="result-stat"><span class="icon">⚡</span><div class="label">元氣加分</div><div class="value">+${scoreChange}</div></div>
+                    <div class="result-stat"><span class="icon">🎁</span><div class="label">寶箱狀態</div><div class="value">${earnedChest ? '解鎖' : `${categoryCount}/2`}</div></div>
+                </div>
+                ${chestHtml}
+                <button style="background:linear-gradient(180deg,#22c55e 0%,#16a34a 100%); box-shadow:0 7px 0 #15803d; width:100%; margin-top:18px;" onclick="continueCorrectResult(${stepsMoved}, ${earnedChest})">出發前進 ➜</button>
+            </div>`;
+        modal.style.display = "flex";
+    }
+
+    function continueCorrectResult(stepsMoved, earnedChest) {
+        document.getElementById("game-modal").style.display = "none";
+        proceedGameMovement(stepsMoved, earnedChest);
+    }
+
+    function recordCorrectCategory(player, quizCategory) {
+        if (!player.correctCategoryCounts[quizCategory]) {
+            player.correctCategoryCounts[quizCategory] = 0;
+        }
+        player.correctCategoryCounts[quizCategory] += 1;
+
+        if (player.correctCategoryCounts[quizCategory] >= 2) {
+            player.correctCategoryCounts[quizCategory] = 0;
+            player.chestCount += 1;
+            return true;
+        }
+        return false;
+    }
+
+    function closeAnalysisAndMove(stepsMoved) {
+        document.getElementById("game-modal").style.display = "none";
+        const player = players[currentPlayerIndex];
+
+        if (player.wrongCount >= 3) {
+            alert(`🚨 答錯已累計 3 次！防護網崩潰，你被救護車強制送往【🏥 隔離病房】！`);
+            player.position = 6; 
+            player.inHospital = true;
+            
+            if (checkGameOver()) return;
+            endTurn();
+            return;
+        }
+
+        proceedGameMovement(stepsMoved);
+    }
+
+    function applyLandingCellEffect(player, stepsMoved) {
+        const currentCell = gridMapping[player.position];
+        let cellMsg = "";
+        
+        if (currentCell.type === "chance") {
+            player.score += 30;
+            cellMsg = `\n✨ 停留【🎲 命運機會】：維持正向好心情，獲得額外元氣 30 分！`;
+        } else if (currentCell.type === "shop") {
+            player.score += 15;
+            cellMsg = `\n🏪 停留【💊 特約藥局】：選購了健康生活用品，元氣 +15！`;
+        } else if (currentCell.type === "start" && stepsMoved > 0) {
+            player.score += 40;
+            cellMsg = `\n🚩 抵達或路過【健康起點】：元氣大補血 +40！`;
+        } else if (currentCell.type === "hospital") {
+            cellMsg = `\n🏥 停留【隔離病房】：本次移動落在隔離病房，本輪不再觸發答題。`;
+        }
+
+        updateUI();
+        return cellMsg;
+    }
+
+    async function proceedGameMovement(stepsMoved, shouldOpenChest = false) {
+        const player = players[currentPlayerIndex];
+
+        if (stepsMoved > 0) {
+            await walkPlayerSteps(player, stepsMoved);
+        }
+
+        const currentCell = gridMapping[player.position];
+        const cellMsg = applyLandingCellEffect(player, stepsMoved);
+        if (cellMsg) {
+            if (currentCell.type === "chance" || currentCell.type === "shop") {
+                showSpecialCellEffectModal(player, currentCell.type, shouldOpenChest);
+                return;
+            }
+            alert(cellMsg);
+        }
+
+        if (checkGameOver()) return;
+
+        if (shouldOpenChest) {
+            showChestModal(player);
+            return;
+        }
+
+        endTurn();
+    }
+
+    function showSpecialCellEffectModal(player, cellType, shouldOpenChest = false) {
+        const modal = document.getElementById("game-modal");
+        const content = document.getElementById("modal-content-area");
+        const isChance = cellType === "chance";
+        const themeClass = isChance ? "chance-theme" : "shop-theme";
+        const decor = isChance ? "🎲 ✨ 🌈 ⭐ ⚡ 🎁" : "💊 🍎 🧃 🛒 💚 ⭐";
+        const icon = isChance ? "🎲✨" : "💊🛒";
+        const title = isChance ? "命運機會降臨！" : "抵達特約藥局！";
+        const subtitle = isChance
+            ? "好心情補給站啟動，健康冒險瞬間充滿驚喜能量。"
+            : "補充健康生活用品，元氣電量穩穩回升。";
+        const rewardLabel = isChance ? "正向好心情獎勵" : "健康用品補給";
+        const scoreBonus = isChance ? 30 : 15;
+        const tip = isChance
+            ? "停在命運機會格可額外獲得元氣分數，像是遊戲裡突然撿到幸運星，健康之神今天有眷顧你。"
+            : "停在特約藥局格可獲得元氣補給，提醒大家健康不只靠答題，也要靠日常好習慣慢慢存起來。";
+
+        content.innerHTML = `
+            <div class="special-cell-card ${themeClass}" data-decor="${decor}">
+                <div class="special-hero-icon">${icon}</div>
+                <h2 class="special-title">${title}</h2>
+                <p class="special-subtitle"><strong style="color:${player.color};">${player.name}</strong> ${subtitle}</p>
+                <div class="special-reward-panel">
+                    <b style="color:${isChance ? '#0369a1' : '#15803d'};">${rewardLabel}</b>
+                    <div class="special-reward-row">
+                        <span class="special-reward-badge">${isChance ? '🌟 幸運加成' : '💚 元氣補給'}</span>
+                        <span class="special-score">+${scoreBonus}</span>
+                    </div>
+                </div>
+                <div class="special-tip">${tip}</div>
+                <button style="background:linear-gradient(180deg,${isChance ? '#38bdf8 0%,#0284c7' : '#22c55e 0%,#16a34a'} 100%); box-shadow:0 7px 0 ${isChance ? '#0369a1' : '#15803d'}; width:100%; margin-top:18px;" onclick="continueAfterSpecialCell(${shouldOpenChest})">收下獎勵，繼續冒險 ➜</button>
+            </div>
+        `;
+        modal.style.display = "flex";
+    }
+
+    function continueAfterSpecialCell(shouldOpenChest = false) {
+        document.getElementById("game-modal").style.display = "none";
+        if (checkGameOver()) return;
+        if (shouldOpenChest) {
+            showChestModal(players[currentPlayerIndex]);
+            return;
+        }
+        endTurn();
+    }
+
+    function showChestModal(player) {
+        const modal = document.getElementById("game-modal");
+        const content = document.getElementById("modal-content-area");
+        const rewardPool = [
+            { type: "move", steps: 1, label: "多走 1 步" },
+            { type: "move", steps: 2, label: "多走 2 步" },
+            { type: "move", steps: 3, label: "多走 3 步" },
+            { type: "score", score: 10, label: "元氣分數 +10" },
+            { type: "score", score: 20, label: "元氣分數 +20" },
+            { type: "score", score: 30, label: "元氣分數 +30" }
+        ];
+        const reward = rewardPool[Math.floor(Math.random() * rewardPool.length)];
+        const rewardData = encodeURIComponent(JSON.stringify(reward));
+
+        content.innerHTML = `
+            <h2 style="color:var(--chest); margin-top:0;">🎁 獲得健康寶箱！</h2>
+            <p><strong>${player.name}</strong> 累積答對 2 題相同類別題型，成功解鎖寶箱。</p>
+            <div class="chest-box">
+                <div class="chest-icon">🧰✨</div>
+                <div class="reward-text">點擊下方按鈕打開寶箱，看看會抽到什麼健康獎勵！</div>
+            </div>
+            <button style="background:var(--chest); width:100%; margin-top:18px;" onclick="openChestReward('${rewardData}')">打開寶箱</button>
+        `;
+        modal.style.display = "flex";
+    }
+
+    async function openChestReward(rewardData) {
+        const modal = document.getElementById("game-modal");
+        const content = document.getElementById("modal-content-area");
+        const reward = JSON.parse(decodeURIComponent(rewardData));
+        const player = players[currentPlayerIndex];
+
+        if (player.chestCount > 0) {
+            player.chestCount -= 1;
+        }
+
+        if (reward.type === "score") {
+            player.score += reward.score;
+            updateUI();
+            content.innerHTML = `
+                <h2 style="color:var(--chest); margin-top:0;">✨ 寶箱開啟成功！</h2>
+                <div class="chest-box">
+                    <div class="chest-icon">💖</div>
+                    <div class="reward-text">恭喜抽中：${reward.label}</div>
+                </div>
+                <button style="background:var(--primary); width:100%; margin-top:18px;" onclick="finishChestTurn()">收下獎勵，換下一位</button>
+            `;
+            if (checkGameOver()) return;
+        } else {
+            content.innerHTML = `
+                <h2 style="color:var(--chest); margin-top:0;">✨ 寶箱開啟成功！</h2>
+                <div class="chest-box">
+                    <div class="chest-icon">👟</div>
+                    <div class="reward-text">恭喜抽中：${reward.label}</div>
+                </div>
+                <button style="background:var(--primary); width:100%; margin-top:18px;" onclick="applyChestMove(${reward.steps})">立刻前進</button>
+            `;
+        }
+    }
+
+    async function applyChestMove(extraSteps) {
+        document.getElementById("game-modal").style.display = "none";
+        const player = players[currentPlayerIndex];
+        if (extraSteps > 0) {
+            await walkPlayerSteps(player, extraSteps);
+        }
+
+        const currentCell = gridMapping[player.position];
+        const cellMsg = applyLandingCellEffect(player, extraSteps);
+        if(cellMsg) alert(cellMsg);
+        if (checkGameOver()) return;
+
+        if (currentCell.type === "quiz") {
+            showBonusQuizModal(player, currentCell);
+            return;
+        }
+
+        endTurn();
+    }
+
+    function showBonusQuizModal(player, currentCell) {
+        const modal = document.getElementById("game-modal");
+        const content = document.getElementById("modal-content-area");
+        const quizCategory = getCellQuizCategory(currentCell);
+        const currentQuiz = getQuizQuestionByCategory(quizCategory);
+
+        let optionsHtml = "";
+        currentQuiz.a.forEach((opt, index) => {
+            optionsHtml += `<button class="option-btn" onclick="handleBonusAnswer(${index}, ${currentQuiz.correct}, ${JSON.stringify(currentQuiz.analysis).replace(/"/g, '&quot;')}, '${quizCategory}')"><b>${index + 1}.</b> ${opt}</button>`;
+        });
+
+        content.innerHTML = `
+            <div style="background:${player.color}; color:white; padding:5px 12px; border-radius:30px; display:inline-block; font-size:0.85rem; font-weight:bold; margin-bottom:12px;">
+                ${player.name} 寶箱加碼答題｜目前格：${currentCell.name}｜題型：${quizCategory}
+            </div>
+            <h3 style="margin-top:0; color:#0f172a; text-align:left; line-height:1.5; font-size:1.15rem;">${currentQuiz.q}</h3>
+            <p style="font-size:0.9rem; color:#64748b; text-align:left; margin-top:-4px;">寶箱多走步數抵達問答格，可加碼答題一次；答對加 25 分，答錯扣 20 分，不再額外前進。</p>
+            <div class="options-container">${optionsHtml}</div>
+        `;
+        modal.style.display = "flex";
+    }
+
+    function handleBonusAnswer(selectedIndex, correctIndex, analysisText, quizCategory) {
+        const modal = document.getElementById("game-modal");
+        const content = document.getElementById("modal-content-area");
+        const player = players[currentPlayerIndex];
+        const isCorrect = selectedIndex === correctIndex;
+
+        if (isCorrect) {
+            player.score += 25;
+            const earnedChest = recordCorrectCategory(player, quizCategory);
+            updateUI();
+            const chestMsg = earnedChest ? `
+🎁 已累積答對 2 題「${quizCategory}」類別題型，再獲得 1 個寶箱！` : `
+目前「${quizCategory}」類別答對累積：${player.correctCategoryCounts[quizCategory]}/2`;
+
+            const categoryCount = player.correctCategoryCounts[quizCategory] || 0;
+            const progressPercent = earnedChest ? 100 : Math.min(100, (categoryCount / 2) * 100);
+            content.innerHTML = `
+                <div class="success-result-card">
+                    <div class="result-hero-icon">🌟</div>
+                    <h2 class="result-title">加碼答題成功！</h2>
+                    <p class="result-subtitle"><strong style="color:${player.color};">${player.name}</strong> 的寶箱加碼挑戰成功，元氣分數再提升。</p>
+                    <div class="result-stats-grid">
+                        <div class="result-stat"><span class="icon">👟</span><div class="label">本次前進</div><div class="value">0 步</div></div>
+                        <div class="result-stat"><span class="icon">⚡</span><div class="label">元氣加分</div><div class="value">+25</div></div>
+                        <div class="result-stat"><span class="icon">🎁</span><div class="label">寶箱狀態</div><div class="value">${earnedChest ? '解鎖' : `${categoryCount}/2`}</div></div>
+                    </div>
+                    <div class="category-progress-card" style="${earnedChest ? 'background:linear-gradient(135deg,#fff7ad 0%,#ffffff 100%); border-color:#ffbe0b;' : ''}">
+                        <b style="color:${earnedChest ? '#b45309' : '#0369a1'};">${earnedChest ? '🎁 寶箱解鎖成功！' : '📚 題型累積進度'}</b><br>
+                        <span style="color:#475569; font-weight:800;">${chestMsg.replace(/\n/g, '<br>')}</span>
+                        <div class="progress-track"><div class="progress-fill" style="width:${progressPercent}%; ${earnedChest ? 'background:linear-gradient(90deg,#ffbe0b 0%,#ff8a3d 100%);' : ''}"></div></div>
+                    </div>
+                    <button style="background:linear-gradient(180deg,#22c55e 0%,#16a34a 100%); box-shadow:0 7px 0 #15803d; width:100%; margin-top:18px;" onclick="finishBonusQuizTurn(${earnedChest})">繼續冒險 ➜</button>
+                </div>
+            `;
+            if (checkGameOver()) return;
+        } else {
+            player.wrongCount += 1;
+            player.score -= 20;
+            updateUI();
+
+            content.innerHTML = `
+                <h3 style="color:var(--danger); margin-top:0;">❌ 加碼答題錯誤！</h3>
+                <p style="text-align:left; font-size:1rem; margin-bottom:5px;">加碼題答錯，元氣扣除 20 點。</p>
+                <div class="analysis-box">${analysisText}</div>
+                <button style="background:var(--danger); width:100%; margin-top:15px;" onclick="finishBonusWrongTurn()">吸收知識，換下一位</button>
+            `;
+            if (checkGameOver()) return;
+        }
+    }
+
+    function finishBonusQuizTurn(earnedChest) {
+        document.getElementById("game-modal").style.display = "none";
+        if (checkGameOver()) return;
+        if (earnedChest) {
+            showChestModal(players[currentPlayerIndex]);
+            return;
+        }
+        endTurn();
+    }
+
+    function finishBonusWrongTurn() {
+        document.getElementById("game-modal").style.display = "none";
+        const player = players[currentPlayerIndex];
+
+        if (player.wrongCount >= 3) {
+            alert(`🚨 答錯已累計 3 次！防護網崩潰，你被救護車強制送往【🏥 隔離病房】！`);
+            player.position = 6;
+            player.inHospital = true;
+            updateUI();
+            if (checkGameOver()) return;
+            endTurn();
+            return;
+        }
+
+        if (checkGameOver()) return;
+        endTurn();
+    }
+
+    function finishChestTurn() {
+        document.getElementById("game-modal").style.display = "none";
+        if (checkGameOver()) return;
+        endTurn();
+    }
+
+    function showFinalRankingModal(sorted, bankruptPlayer, winnerPlayer) {
+        const modal = document.getElementById("game-modal");
+        const content = document.getElementById("modal-content-area");
+        const reason = bankruptPlayer
+            ? `因 <b style="color:var(--danger);">${bankruptPlayer.name}</b> 元氣低於 0 分，遊戲提前結算。`
+            : `恭喜 <b style="color:${winnerPlayer.color};">${winnerPlayer.name}</b> 率先突破 250 分，成為終極健康達人！`;
+        const medals = ["🥇", "🥈", "🥉", "🏅"];
+        const rows = sorted.map((p, index) => `
+            <div class="ranking-row ${index === 0 ? 'rank-1' : ''}">
+                <div class="ranking-medal">${medals[index] || '🏅'}</div>
+                <div><div class="ranking-name" style="color:${p.color};">第 ${index + 1} 名｜${p.name}</div><div class="ranking-meta">答錯 ${p.wrongCount}/3｜寶箱 ${p.chestCount} 個｜位置第 ${p.position} 格</div></div>
+                <div class="ranking-score">${p.score} 分</div>
+            </div>`).join('');
+        content.innerHTML = `
+            <div class="ranking-card">
+                <div class="ranking-hero">🏆</div>
+                <h2 class="ranking-title">最終元氣排行榜</h2>
+                <div class="ranking-reason">${reason}</div>
+                <div class="ranking-list">${rows}</div>
+                <button style="background:linear-gradient(180deg,#ff8a3d 0%,#f97316 100%); width:100%; margin-top:18px;" onclick="location.reload()">再玩一次 🎲</button>
+            </div>`;
+        modal.style.display = "flex";
+    }
+
+    function checkGameOver() {
+        const bankruptPlayer = players.find(p => p.score < 0);
+        const winnerPlayer = players.find(p => p.score >= 250); 
+
+        if (bankruptPlayer || winnerPlayer) {
+            let sorted = [...players].sort((a,b) => b.score - a.score);
+            
+            showFinalRankingModal(sorted, bankruptPlayer, winnerPlayer);
+            return true;
+        }
+        return false;
+    }
+
+    function endTurn() {
+        document.getElementById("dice-result").innerText = "";
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+        updateUI();
+    }
+</script>
+</body>
+</html>
